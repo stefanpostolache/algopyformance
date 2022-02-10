@@ -1,8 +1,8 @@
 # Welcome to Algopyformance
 
-A library created to aid students of ISCTE-IUL to build performance 
-tests for their app. This is the first version so it is still limited and the 
-plotting functionality is not as functional as I wished but improvements are 
+A library created to aid students of ISCTE-IUL, in Portugal, to build performance 
+tests for their app. This is the first version, so it is very limited and the 
+plotting functionality is not as functional as I wish but improvements are 
 comming soon. I am open to suggestions of features I can add and improvements to my code.
 
 The library uses the Builder pattern to offer a simple and easy to use API to 
@@ -12,13 +12,13 @@ just need to excute
 the following 
 steps:
 1. Import the <b>TestStackBuilder</b> from the tests module 
-2. add <b>targets</b> which are functions that you want to execute during the 
+2. Add <b>targets</b> which are functions that you want to execute during the 
    test (you can add multiple but keep in mind that they should contain the 
    same parameters)
 3. <b>(Optional)</b> If you want to repeat the test multiple times use the 
    <b>repeat</b> 
 method to pass the number of repetitions
-4. <b>(Optional)</b> if you want to let the TestStackBuilder plot your data you 
+4. <b>(Optional)</b> If you want to let the TestStackBuilder plot your data you 
    can 
 add the flag to the builder using the <b>do_show_plot</b>. Keep in mind that 
    this feature doesn't work very well and 
