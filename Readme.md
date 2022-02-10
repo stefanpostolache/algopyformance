@@ -28,6 +28,22 @@ add the flag to the builder using the <b>do_show_plot</b>. Keep in mind that
    the output of the run method which is a dataframe of results from the tests 
    to build your own plot using Seaborn or Matplotlib.
 
+The steps described above are exemplified in the code below
+```Python
+from sp_algopyformancelib.tests import TestStackBuilder
+
+new_stack = TestStackBuilder()\
+        .add_target(my_func_recur)\
+        .add_target(my_func_iter)\
+        .add_param_combinations([(x,) for x in range(20, 51, 5)])\
+        .do_show_plot()\
+        .build()
+
+results = new_stack.run()
+
+print(results)
+```
+
 <br>
 <br>
 <br>
