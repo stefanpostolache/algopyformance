@@ -33,3 +33,5 @@ __pycache__/
 *$py.class
 
 .idea
+
+.pypirc
