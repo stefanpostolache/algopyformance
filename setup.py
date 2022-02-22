@@ -6,7 +6,7 @@ with open("Readme.md") as fh:
 setup(
     name='sp_algopyformance',
     packages=find_packages(include=['sp_algopyformancelib']),
-    version='0.1.0',
+    version='0.1.1',
     description="A package to aid students of ISCTE in testing their algorithms",
     long_description=long_description,
     long_description_content_type="text/markdown",
