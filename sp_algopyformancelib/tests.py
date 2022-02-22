@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 import inspect
 from enum import Enum
@@ -90,6 +91,8 @@ class TestStack:
         """
         self.__should_show_plot = builder.plot
         self.__tests = builder.tests
+        self.__params = builder.params
+        self.__func_names = builder.func_names
 
     def run(self):
         """
@@ -99,22 +102,18 @@ class TestStack:
         the value for each parameter and the resulting duration of executing
         the script.
         """
-        if self.__tests:
-            param_names = [*inspect.signature(self.__tests[
-                                                 0].target).parameters.keys()]
-            df = pd.DataFrame(columns=['algorithm']+param_names+['duration'])
-            for test in self.__tests:
-                duration = test.run()
-                stringified_params = list(map(lambda x: str(x) if type(x) not in [str, int, float, bool] else x, test.payload))
-                df.loc[len(df.index)] = [test.target.__name__, *stringified_params,
-                                         duration]
-            if self.__should_show_plot:
-                show_performance_plot(df)
+        assert self.__tests, "No tests were added. Make sure you added targets while building the stack."
 
-            return df
-        else:
-            print("No tests were added. Make sure you added targets while "
-                  "building the stack.")
+        results = pd.DataFrame(
+            data=list(map(lambda row: list(map(lambda test: test.run(), row)), self.__tests)),
+            index=self.__params,
+            columns=self.__func_names
+        )
+        if self.__should_show_plot:
+            results.plot(figsize=[15, 10])
+            plt.show()
+
+        return results
 
 
 class TestStackBuilder:
@@ -146,16 +145,29 @@ class TestStackBuilder:
         return self.__plot
 
     @property
-    def tests(self) -> list[Test]:
+    def tests(self) -> list[list[Test]]:
         """
         Gets the tests as combinations of target functions and their respective parameters
         :return: A list of Tests
         """
-        generated_tests = []
-        for param_combination in self.__param_combinations:
-            for target in self.__targets:
-                generated_tests.append(Test(target, param_combination, self.__repetitions))
-        return generated_tests
+        return [[Test(target, param_combination, self.__repetitions) for target in self.__targets] for param_combination in self.__param_combinations]
+
+    @property
+    def params(self) -> pd.MultiIndex:
+        """
+        Retrieves parameters used to test the functions as a MultiIndex for a dataframe
+        :return: MultiIndex of parameter combinations
+        """
+        param_names = inspect.signature(self.__targets[0]).parameters.keys()
+        return pd.MultiIndex.from_tuples(self.__param_combinations, names=param_names)
+
+    @property
+    def func_names(self) -> [str]:
+        """
+        Retrieves a list of names of functions tested
+        :return: list of function names
+        """
+        return [func.__name__ for func in self.__targets]
 
     def add_target(self, target) -> TestStackBuilder:
         """
