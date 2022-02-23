@@ -8,35 +8,12 @@ import pandas as pd
 from inspect import getargspec
 import seaborn as sns
 import matplotlib.pyplot as plt
+from functools import reduce
 
 """
 A Module that helps test the performance your algorithms. It provides a simple, 
 developer friendly way to declare your tests and plot the results. 
 """
-
-
-def show_performance_plot(df):
-    """
-    A function that turns any dataframe used to store performance data regarding
-    performance tests into a graph.
-
-    If the functions tested contain only one parameter, a relationship plot
-    between the duration and that parameter will be plotted. If, however,
-    the functions receive multiple arguments than a pair plot is built relating each
-    individual parameter with the duration and eachother (see see seaborn
-    pairplot) for more information.
-
-    :param df: a data frame with keys (columns) ['algorithm', ...<function
-    param names>, 'duration']
-    :return:
-    """
-    sns.set_style("darkgrid")
-    if df.shape[1] == 3:
-        sns.relplot(data=df, x=df.columns[1], y='duration',
-                    kind='line', hue='algorithm', palette='rocket_r')
-    else:
-        sns.pairplot(data=df, hue='algorithm', palette='rocket_r')
-    plt.show()
 
 
 class Test:
@@ -70,8 +47,7 @@ class Test:
         parameters and times the execution
         :return: the duration of the execution
         """
-        return sum(repeat(lambda: self.__target(*self.__payload),
-                          number=1, repeat=self.__repetitions))/self.__repetitions
+        return sum(repeat(lambda: self.__target(*self.__payload), number=1, repeat=self.__repetitions))/self.__repetitions
 
 
 class TestStack:
@@ -93,6 +69,15 @@ class TestStack:
         self.__tests = builder.tests
         self.__params = builder.params
         self.__func_names = builder.func_names
+        self.__test_results = None
+
+    @property
+    def test_results(self):
+        """
+        Results of tests run
+        :return: Dataframe containing data on parameters used, function and duration of execution
+        """
+        return self.__test_results
 
     def run(self):
         """
@@ -109,11 +94,34 @@ class TestStack:
             index=self.__params,
             columns=self.__func_names
         )
-        if self.__should_show_plot:
-            results.plot(figsize=[15, 10])
-            plt.show()
 
-        return results
+        self.__test_results = results
+
+        return self
+
+    def plot_results(self, figsize=(12, 6), palette=None, style=None):
+        """
+        Builds a lineplot showing the relation between the parameters passed to the algorithms
+        and the duration of the execution.
+        :param figsize: size of the plot
+        :param palette: color palette for the lines in the plot (palletes supported by seaborn)
+        :return: plot axis
+        """
+        assert self.__test_results is not None, "You need to execute the tests before plotting them"
+
+        if palette or style:
+            df = pd.melt(
+                self.__test_results.reset_index(),
+                id_vars=self.__test_results.index.names,
+                var_name='algorithm',
+                value_name='duration')
+            combined_key = ','.join(self.__test_results.index.names)
+            df[combined_key] = df[self.__test_results.index.names].agg(lambda itr: ','.join(map(str, itr)), axis=1)
+            sns.set_style(style if style else "white")
+            sns.lineplot(x=combined_key, y='duration', hue='algorithm', data=df,
+                         ax=plt.gcf().set_size_inches(*figsize), palette=(palette if palette else "Set2"))
+        else:
+            self.__test_results.plot(figsize=figsize)
 
 
 class TestStackBuilder:
@@ -217,18 +225,6 @@ class TestStackBuilder:
         :return: a new TestStackBuilder with the repetitions altered
         """
         self.__repetitions = n_times
-        return self
-
-    def do_show_plot(self) -> TestStackBuilder:
-        """
-        Sets the output type for the tests.
-
-        The output can be a graph (plot) or a data frame
-
-        :param plot: true
-        :return: a TestStackBuilder with plot set to the provided value
-        """
-        self.__plot = True
         return self
 
     def build(self) -> TestStack:
